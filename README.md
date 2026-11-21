@@ -4,6 +4,8 @@ A Cosine mod for Zen Browser. Open **Notes** beside the `+` button at the bottom
 
 Each Space has its own notes. Saved entries stay in the local Zen profile after a restart. Drafts stay in their original Space and window until saved or the window closes. Canceling an edit returns you to your add draft. The button appears in regular windows. Task records from earlier versions remain saved in the profile.
 
+The panel shows the current Space under **Notes**. Use **Search notes** to filter its saved notes by text, attached page title, or URL. **Clear search** restores the full list.
+
 ## Install with Cosine
 
 The mod targets Zen 1.23b and can run alongside **Zen Tab Group Colors**. In **Settings → Cosine Mods**, open the gear menu and turn on **Enable installing JS from unofficial sources** before installing either way.

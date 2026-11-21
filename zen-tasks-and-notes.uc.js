@@ -102,11 +102,24 @@
     panel.setAttribute("aria-label", "Notes");
 
     const body = element("div", { class: "ztan-body" });
+    const header = element("header", { class: "ztan-header" });
+    const titles = element("div", { class: "ztan-titles" });
     const heading = element("h1", { class: "ztan-title" }, "Notes");
+    const spaceLabel = element("span", { class: "ztan-space" });
+    const close = action("Close notes", () => {
+      restoreFocus = true;
+      panel.hidePopup();
+    });
+    close.className = "ztan-icon ztan-close";
+    close.title = "Close notes";
+    titles.append(heading, spaceLabel);
+    header.append(titles, close);
     const form = element("form", { class: "ztan-composer" });
     const composerHeading = element("div", { class: "ztan-composer-heading" });
     const composerLabel = element("label", { for: "ztan-note-input" });
-    const shortcutHint = element("span", { class: "ztan-shortcut" }, "Ctrl/⌘ + Enter to save");
+    const shortcutHint = element("kbd", { class: "ztan-shortcut" },
+      AppConstants.platform === "macosx" ? "⌘ Enter" : "Ctrl + Enter");
+    shortcutHint.title = "Save note";
     const noteInput = element("textarea", {
       id: "ztan-note-input", rows: "3", maxlength: "8000",
     });
@@ -122,6 +135,7 @@
     const composerActions = element("div", { class: "ztan-composer-actions" });
     const formActions = element("div", { class: "ztan-form-actions" });
     const attach = action("Attach current page", toggleAttachment);
+    attach.className = "ztan-attach";
     const cancel = action("Cancel", cancelEdit);
     const submit = element("button", {
       type: "submit", class: "ztan-primary", "aria-keyshortcuts": "Control+Enter Meta+Enter",
@@ -134,16 +148,30 @@
     const error = element("p", { class: "ztan-error", role: "alert" });
     const listHeading = element("div", { class: "ztan-list-heading" });
     const listTitle = element("h2", {}, "Saved notes");
-    const count = element("span", { class: "ztan-count" });
+    const count = element("span", { class: "ztan-count", role: "status" });
+    const status = element("span", { class: "ztan-status", role: "status" });
+    const filter = element("div", { class: "ztan-filter" });
+    const search = element("input", {
+      type: "search", placeholder: "Search notes…", "aria-label": "Search notes in this Space",
+    });
+    const clear = action("Clear search", () => {
+      if (!isCurrentSpace(spaceId)) return;
+      search.value = "";
+      filterNotes();
+      search.focus();
+    });
+    clear.className = "ztan-icon ztan-close";
+    clear.title = "Clear search";
+    filter.append(search, clear);
     const list = element("ul", { class: "ztan-list", "aria-label": "Saved notes" });
-    const empty = element("p", { class: "ztan-empty" }, "No notes yet. Write one above.");
-    listHeading.append(listTitle, count);
-    body.append(heading, form, error, listHeading, list, empty);
+    const empty = element("p", { class: "ztan-empty", role: "status" });
+    listHeading.append(listTitle, count, status);
+    body.append(header, form, error, listHeading, filter, list, empty);
     panel.append(body);
 
     function getView() {
       if (!views.has(spaceId)) {
-        views.set(spaceId, { add: emptyDraft(), edit: null, confirmDeleteId: null, expanded: new Set() });
+        views.set(spaceId, { add: emptyDraft(), edit: null, query: "", confirmDeleteId: null, expanded: new Set() });
       }
       return views.get(spaceId);
     }
@@ -158,8 +186,14 @@
     function renderView() {
       const view = getView();
       const draft = view.edit || view.add;
+      const name = gZenWorkspaces.getWorkspaceFromId?.(spaceId)?.name;
+      spaceLabel.textContent = name ? `Space · ${name}` : "Current Space";
+      spaceLabel.title = spaceLabel.textContent;
+      status.textContent = "";
+      search.value = view.query;
       composerLabel.textContent = view.edit ? "Editing note" : "New note";
       noteInput.value = draft.text;
+      submit.disabled = !draft.text.trim();
       noteInput.placeholder = view.edit ? "Edit your note…" : "Write a note…";
       cancel.hidden = !view.edit;
       submit.textContent = view.edit ? "Save changes" : "Save note";
@@ -167,6 +201,18 @@
       error.textContent = "";
       renderEntries();
     }
+
+    function filterNotes() {
+      if (!isCurrentSpace(spaceId)) return;
+      const view = getView();
+      view.query = search.value;
+      view.confirmDeleteId = null;
+      status.textContent = "";
+      renderEntries();
+      list.scrollTop = 0;
+    }
+
+    search.addEventListener("input", filterNotes);
 
     function renderEntries() {
       const renderedSpaceId = spaceId;
@@ -180,6 +226,7 @@
         previews = [];
         list.replaceChildren();
         list.hidden = true;
+        filter.hidden = true;
         count.hidden = true;
         empty.hidden = true;
         error.textContent = "Couldn't load saved notes.";
@@ -188,6 +235,15 @@
       }
 
       const view = getView();
+      if (!entries.length) {
+        search.value = "";
+        view.query = "";
+      }
+      const query = view.query.trim().toLowerCase();
+      const matches = query ? entries.filter(entry =>
+        [entry.text, entry.page?.title, entry.page?.url].some(value =>
+          typeof value === "string" && value.toLowerCase().includes(query))
+      ) : entries;
       const ids = new Set(entries.map(entry => entry.id));
       if (!ids.has(view.confirmDeleteId)) view.confirmDeleteId = null;
       for (const id of view.expanded) {
@@ -196,13 +252,17 @@
 
       const scrollTop = list.scrollTop;
       previews = [];
-      list.replaceChildren(...entries.map(entry => renderEntry(entry, view, renderedSpaceId)));
-      list.hidden = entries.length === 0;
+      list.replaceChildren(...matches.map(entry => renderEntry(entry, view, renderedSpaceId)));
+      list.hidden = matches.length === 0;
+      filter.hidden = entries.length === 0;
+      clear.hidden = !view.query;
       list.scrollTop = scrollTop;
       count.hidden = false;
-      count.textContent = String(entries.length);
-      count.setAttribute("aria-label", `${entries.length} saved ${entries.length === 1 ? "note" : "notes"}`);
-      empty.hidden = entries.length > 0;
+      count.textContent = query ? `${matches.length} of ${entries.length}` : String(entries.length);
+      count.setAttribute("aria-label", `${count.textContent} saved ${entries.length === 1 ? "note" : "notes"}`);
+      empty.hidden = matches.length > 0;
+      empty.textContent = query ? "No matching notes. Try another search." : "No saved notes in this Space yet.";
+      if (filter.hidden && filter.contains(focused)) noteInput.focus();
       if (focusKey) focusEntryAction(focusKey);
       schedulePreviewUpdate();
     }
@@ -216,6 +276,7 @@
 
     function renderEntry(entry, view, renderedSpaceId) {
       const row = element("li", { class: "ztan-entry" });
+      row.classList.toggle("ztan-editing", view.edit?.id === entry.id);
       const content = element("div", { class: "ztan-entry-content" });
       const textId = `ztan-note-text-${++previewId}`;
       const entryText = element("p", { class: "ztan-entry-text", id: textId }, entry.text);
@@ -258,6 +319,7 @@
 
       const controls = element("div", { class: "ztan-entry-actions" });
       if (view.confirmDeleteId === entry.id) {
+        row.classList.add("ztan-confirming");
         const prompt = element("span", { class: "ztan-delete-prompt" }, "Delete this note?");
         const cancelDelete = action("Cancel", () => {
           if (!isCurrentRow()) return;
@@ -278,6 +340,7 @@
           } else {
             renderEntries();
           }
+          status.textContent = "Note deleted";
         });
         confirmDelete.className = "ztan-delete";
         confirmDelete.dataset.focusKey = `${entry.id}:confirm-delete`;
@@ -291,14 +354,18 @@
           noteInput.focus();
         });
         edit.disabled = Boolean(view.edit);
+        edit.className = "ztan-icon ztan-edit";
+        edit.title = "Edit note";
         edit.dataset.focusKey = `${entry.id}:edit`;
         edit.setAttribute("aria-label", `Edit note ${description}`);
         const remove = action("Delete", () => {
           if (!isCurrentRow()) return;
           view.confirmDeleteId = entry.id;
           renderEntries();
-          focusEntryAction(`${entry.id}:confirm-delete`);
+          focusEntryAction(`${entry.id}:cancel-delete`);
         });
+        remove.className = "ztan-icon ztan-remove";
+        remove.title = "Delete note";
         remove.dataset.focusKey = `${entry.id}:delete`;
         remove.setAttribute("aria-label", `Delete note ${description}`);
         controls.append(edit, remove);
@@ -392,6 +459,8 @@
       const view = getView();
       const draft = view.edit || view.add;
       draft.text = event.target.value;
+      submit.disabled = !draft.text.trim();
+      status.textContent = "";
       error.textContent = "";
     });
 
@@ -429,8 +498,12 @@
       }
 
       if (view.edit) view.edit = null;
-      else view.add = emptyDraft();
+      else {
+        view.add = emptyDraft();
+        view.query = "";
+      }
       renderView();
+      status.textContent = adding ? "Note saved" : "Changes saved";
       if (adding) list.scrollTop = 0;
       noteInput.focus();
     });
