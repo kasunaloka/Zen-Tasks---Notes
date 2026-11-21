@@ -5,7 +5,8 @@
 }
 
 #ztan-panel {
-  --ztan-border: color-mix(in srgb, currentColor 20%, transparent);
+  --ztan-border: color-mix(in srgb, currentColor 18%, transparent);
+  --ztan-surface: color-mix(in srgb, currentColor 5%, transparent);
   --ztan-hover: color-mix(in srgb, currentColor 10%, transparent);
   --ztan-accent: var(--toolbarbutton-icon-fill-attention, currentColor);
 }
@@ -16,38 +17,49 @@
 
 #ztan-panel .ztan-body {
   box-sizing: border-box;
-  display: grid;
-  gap: 10px;
-  width: min(320px, 85vw);
-  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: min(360px, 85vw);
+  max-height: min(620px, 85vh);
+  overflow-y: auto;
+  padding: 15px;
   font: menu;
 }
 
-#ztan-panel .ztan-modes {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 4px;
-  padding: 3px;
-  border: 1px solid var(--ztan-border);
-  border-radius: 9px;
+#ztan-panel .ztan-body * {
+  box-sizing: border-box;
+}
+
+#ztan-panel :is(.ztan-body, .ztan-list) {
+  scrollbar-color: color-mix(in srgb, currentColor 35%, transparent) transparent;
+  scrollbar-width: thin;
+}
+
+#ztan-panel :is(.ztan-title, .ztan-list-heading h2) {
+  margin: 0;
+}
+
+#ztan-panel .ztan-title {
+  font-size: 1.25em;
+  font-weight: 700;
+  letter-spacing: -0.01em;
 }
 
 #ztan-panel button {
+  appearance: none;
+  min-height: 28px;
+  padding: 5px 8px;
   border: 1px solid transparent;
-  border-radius: 6px;
+  border-radius: 7px;
   background: transparent;
   color: inherit;
   font: inherit;
-  padding: 4px 7px;
   cursor: pointer;
 }
 
-#ztan-panel button:is(:hover, [aria-pressed="true"]) {
+#ztan-panel button:hover {
   background: var(--ztan-hover);
-}
-
-#ztan-panel button[aria-pressed="true"] {
-  font-weight: 600;
 }
 
 #ztan-panel button:disabled {
@@ -55,128 +67,222 @@
   cursor: default;
 }
 
-#ztan-panel :is(input, textarea, button, a):focus-visible {
+#ztan-panel :is(textarea, button, a):focus-visible {
   outline: 2px solid var(--ztan-accent);
-  outline-offset: 1px;
+  outline-offset: 2px;
 }
 
 #ztan-panel .ztan-composer {
   display: grid;
-  gap: 7px;
+  gap: 9px;
   min-width: 0;
+  padding: 11px;
+  border: 1px solid var(--ztan-border);
+  border-radius: 11px;
+  background: var(--ztan-surface);
 }
 
-#ztan-panel :is(input[type="text"], textarea) {
-  box-sizing: border-box;
-  width: 100%;
-  padding: 7px 8px;
-  border: 1px solid var(--ztan-border);
-  border-radius: 6px;
-  background: transparent;
-  color: inherit;
-  font: inherit;
+#ztan-panel .ztan-composer-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 4px 8px;
+}
+
+#ztan-panel .ztan-composer-heading label {
+  font-weight: 600;
+}
+
+#ztan-panel .ztan-shortcut {
+  font-size: 0.83em;
+  opacity: 0.7;
 }
 
 #ztan-panel textarea {
+  width: 100%;
+  min-height: 76px;
+  max-height: min(150px, 25vh);
+  padding: 9px;
   resize: vertical;
-  max-height: 120px;
+  border: 1px solid var(--ztan-border);
+  border-radius: 8px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  line-height: 1.4;
 }
 
-#ztan-panel :is(.ztan-composer-actions, .ztan-entry-actions) {
+#ztan-panel textarea::placeholder {
+  color: inherit;
+  opacity: 0.6;
+}
+
+#ztan-panel :is(.ztan-composer-actions, .ztan-form-actions, .ztan-entry-actions) {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 3px;
+  gap: 4px;
 }
 
-#ztan-panel .ztan-composer-actions {
-  justify-content: flex-end;
+#ztan-panel .ztan-form-actions {
+  margin-inline-start: auto;
 }
 
 #ztan-panel .ztan-primary {
-  border-color: var(--ztan-border);
-  background: var(--ztan-hover);
+  padding-inline: 11px;
+  border-color: color-mix(in srgb, currentColor 25%, transparent);
+  background: color-mix(in srgb, currentColor 15%, transparent);
   font-weight: 600;
 }
 
 #ztan-panel .ztan-primary:hover {
   border-color: var(--ztan-accent);
+  background: color-mix(in srgb, currentColor 22%, transparent);
+}
+
+#ztan-panel .ztan-page-preview {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  padding: 6px 7px;
+  border: 1px solid var(--ztan-border);
+  border-radius: 8px;
+}
+
+#ztan-panel .ztan-page-info {
+  display: grid;
+  flex: 1;
+  gap: 2px;
+  min-width: 0;
+}
+
+#ztan-panel .ztan-page-caption {
+  font-size: 0.8em;
+  opacity: 0.7;
+}
+
+#ztan-panel :is(.ztan-page-title, .ztan-link) {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+#ztan-panel .ztan-page-title {
+  font-size: 0.92em;
+}
+
+#ztan-panel .ztan-list-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+#ztan-panel .ztan-list-heading h2 {
+  font-size: 0.95em;
+  font-weight: 600;
+}
+
+#ztan-panel .ztan-count {
+  min-width: 22px;
+  padding: 3px 6px;
+  border-radius: 6px;
+  background: var(--ztan-surface);
+  font-size: 0.82em;
+  text-align: center;
 }
 
 #ztan-panel .ztan-list {
-  max-height: min(280px, 42vh);
+  display: grid;
+  align-content: start;
+  flex: 1 1 auto;
+  gap: 8px;
+  min-height: min(60px, 15vh);
+  max-height: min(320px, 42vh);
   margin: 0;
-  padding: 0 3px;
-  overflow: auto;
+  padding: 0 2px 2px;
+  overflow-y: auto;
   overscroll-behavior: contain;
   list-style: none;
 }
 
-#ztan-panel :is(.ztan-list, .ztan-error):empty {
-  display: none;
-}
-
 #ztan-panel .ztan-entry {
-  display: flex;
-  justify-content: space-between;
-  align-items: start;
+  display: grid;
   gap: 6px;
-  padding-block: 7px;
-  border-block-start: 1px solid var(--ztan-border);
+  min-width: 0;
+  padding: 10px;
+  border: 1px solid var(--ztan-border);
+  border-radius: 10px;
+  background: var(--ztan-surface);
 }
 
 #ztan-panel .ztan-entry-content {
-  display: grid;
-  gap: 3px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 5px;
   min-width: 0;
 }
 
-#ztan-panel .ztan-entry-actions {
-  flex-shrink: 0;
-  font-size: 0.88em;
-}
-
-#ztan-panel .ztan-task {
-  display: flex;
-  align-items: start;
-  gap: 6px;
-  cursor: pointer;
-}
-
-#ztan-panel .ztan-task input {
-  margin: 2px 0 0 2px;
-}
-
-#ztan-panel .ztan-task input:checked + span {
-  opacity: 0.7;
-  text-decoration: line-through;
-}
-
 #ztan-panel .ztan-entry-text {
+  width: 100%;
+  max-height: 5.8em;
+  margin: 0;
+  overflow: hidden;
+  line-height: 1.45;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
 
-#ztan-panel :is(.ztan-page-preview, .ztan-link) {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+#ztan-panel .ztan-entry-text.ztan-expanded {
+  max-height: none;
+}
+
+#ztan-panel .ztan-expand {
+  min-height: 0;
+  margin-inline-start: -5px;
+  padding: 3px 5px;
   font-size: 0.88em;
+  font-weight: 600;
 }
 
 #ztan-panel .ztan-link {
+  max-width: 100%;
   color: var(--link-color, LinkText);
+  font-size: 0.9em;
+}
+
+#ztan-panel .ztan-entry-actions {
+  justify-content: flex-end;
+  font-size: 0.9em;
+}
+
+#ztan-panel .ztan-delete-prompt {
+  margin-inline-end: auto;
+  font-weight: 600;
+}
+
+#ztan-panel .ztan-delete {
+  color: var(--text-color-error, inherit);
+  font-weight: 600;
 }
 
 #ztan-panel :is(.ztan-empty, .ztan-error) {
   margin: 0;
 }
 
-#ztan-panel :is(.ztan-empty, .ztan-page-preview) {
+#ztan-panel .ztan-empty {
+  padding: 8px 0;
   opacity: 0.75;
 }
 
 #ztan-panel .ztan-error {
   color: var(--text-color-error, currentColor);
   font-weight: 600;
+}
+
+#ztan-panel .ztan-error:empty {
+  display: none;
 }
