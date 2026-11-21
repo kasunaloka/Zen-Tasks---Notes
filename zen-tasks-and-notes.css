@@ -1,0 +1,182 @@
+#ztan-button {
+  list-style-image: url("chrome://global/skin/icons/tab-notes.svg");
+  -moz-context-properties: fill, fill-opacity;
+  fill: currentColor;
+}
+
+#ztan-panel {
+  --ztan-border: color-mix(in srgb, currentColor 20%, transparent);
+  --ztan-hover: color-mix(in srgb, currentColor 10%, transparent);
+  --ztan-accent: var(--toolbarbutton-icon-fill-attention, currentColor);
+}
+
+#ztan-panel [hidden] {
+  display: none !important;
+}
+
+#ztan-panel .ztan-body {
+  box-sizing: border-box;
+  display: grid;
+  gap: 10px;
+  width: min(320px, 85vw);
+  padding: 12px;
+  font: menu;
+}
+
+#ztan-panel .ztan-modes {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 4px;
+  padding: 3px;
+  border: 1px solid var(--ztan-border);
+  border-radius: 9px;
+}
+
+#ztan-panel button {
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  padding: 4px 7px;
+  cursor: pointer;
+}
+
+#ztan-panel button:is(:hover, [aria-pressed="true"]) {
+  background: var(--ztan-hover);
+}
+
+#ztan-panel button[aria-pressed="true"] {
+  font-weight: 600;
+}
+
+#ztan-panel button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+#ztan-panel :is(input, textarea, button, a):focus-visible {
+  outline: 2px solid var(--ztan-accent);
+  outline-offset: 1px;
+}
+
+#ztan-panel .ztan-composer {
+  display: grid;
+  gap: 7px;
+  min-width: 0;
+}
+
+#ztan-panel :is(input[type="text"], textarea) {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 7px 8px;
+  border: 1px solid var(--ztan-border);
+  border-radius: 6px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+}
+
+#ztan-panel textarea {
+  resize: vertical;
+  max-height: 120px;
+}
+
+#ztan-panel :is(.ztan-composer-actions, .ztan-entry-actions) {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 3px;
+}
+
+#ztan-panel .ztan-composer-actions {
+  justify-content: flex-end;
+}
+
+#ztan-panel .ztan-primary {
+  border-color: var(--ztan-border);
+  background: var(--ztan-hover);
+  font-weight: 600;
+}
+
+#ztan-panel .ztan-primary:hover {
+  border-color: var(--ztan-accent);
+}
+
+#ztan-panel .ztan-list {
+  max-height: min(280px, 42vh);
+  margin: 0;
+  padding: 0 3px;
+  overflow: auto;
+  overscroll-behavior: contain;
+  list-style: none;
+}
+
+#ztan-panel :is(.ztan-list, .ztan-error):empty {
+  display: none;
+}
+
+#ztan-panel .ztan-entry {
+  display: flex;
+  justify-content: space-between;
+  align-items: start;
+  gap: 6px;
+  padding-block: 7px;
+  border-block-start: 1px solid var(--ztan-border);
+}
+
+#ztan-panel .ztan-entry-content {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+#ztan-panel .ztan-entry-actions {
+  flex-shrink: 0;
+  font-size: 0.88em;
+}
+
+#ztan-panel .ztan-task {
+  display: flex;
+  align-items: start;
+  gap: 6px;
+  cursor: pointer;
+}
+
+#ztan-panel .ztan-task input {
+  margin: 2px 0 0 2px;
+}
+
+#ztan-panel .ztan-task input:checked + span {
+  opacity: 0.7;
+  text-decoration: line-through;
+}
+
+#ztan-panel .ztan-entry-text {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+#ztan-panel :is(.ztan-page-preview, .ztan-link) {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.88em;
+}
+
+#ztan-panel .ztan-link {
+  color: var(--link-color, LinkText);
+}
+
+#ztan-panel :is(.ztan-empty, .ztan-error) {
+  margin: 0;
+}
+
+#ztan-panel :is(.ztan-empty, .ztan-page-preview) {
+  opacity: 0.75;
+}
+
+#ztan-panel .ztan-error {
+  color: var(--text-color-error, currentColor);
+  font-weight: 600;
+}

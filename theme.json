@@ -1,0 +1,18 @@
+{
+  "id": "zen-tasks-and-notes",
+  "name": "Zen Tasks & Notes",
+  "description": "Keep a task list and quick notes for each Zen Space from the sidebar footer.",
+  "scripts": {
+    "zen-tasks-and-notes.uc.js": {
+      "include": ["chrome://browser/content/browser.xhtml"]
+    }
+  },
+  "style": {
+    "chrome": "zen-tasks-and-notes.css"
+  },
+  "readme": "README.md",
+  "author": "Local custom mod",
+  "version": "0.1.0",
+  "tags": ["Zen Browser", "Tasks", "Notes", "Spaces"],
+  "fork": ["zen"]
+}
