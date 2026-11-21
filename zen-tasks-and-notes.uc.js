@@ -19,8 +19,8 @@
     return node;
   }
 
-  function action(label, handler, className = "") {
-    const button = element("button", { type: "button", class: className }, label);
+  function action(label, handler) {
+    const button = element("button", { type: "button" }, label);
     button.addEventListener("click", handler);
     return button;
   }
@@ -36,7 +36,12 @@
   function entriesFor(spaces, spaceId) {
     if (!Object.hasOwn(spaces, spaceId)) return [];
     const entries = spaces[spaceId];
-    if (!Array.isArray(entries)) throw new Error("Invalid Tasks & Notes entries");
+    if (!Array.isArray(entries) || entries.some(entry =>
+      typeof entry?.id !== "string" || typeof entry.text !== "string" ||
+      (entry.kind !== "task" && entry.kind !== "note")
+    )) {
+      throw new Error("Invalid Tasks & Notes entries");
+    }
     return entries;
   }
 
@@ -46,7 +51,8 @@
       if (url.protocol !== "https:" && url.protocol !== "http:") return null;
       url.username = "";
       url.password = "";
-      return { url: url.href, title: title?.trim() || url.hostname };
+      const label = typeof title === "string" ? title.trim() : "";
+      return { url: url.href, title: label || url.hostname };
     } catch {
       return null;
     }
@@ -129,6 +135,7 @@
 
     function showKind(nextKind) {
       if (kind === nextKind) return;
+      if (!isCurrentSpace(spaceId)) return;
       kind = nextKind;
       renderView();
     }
@@ -159,21 +166,23 @@
     }
 
     function renderEntries() {
+      const renderedSpaceId = spaceId;
       const focused = document.activeElement;
       const focusKey = list.contains(focused) ? focused.dataset.focusKey : null;
       let entries;
       try {
-        entries = entriesFor(readSpaces(), spaceId).filter(entry => entry.kind === kind);
+        entries = entriesFor(readSpaces(), renderedSpaceId).filter(entry => entry.kind === kind);
       } catch (cause) {
         console.error("Zen Tasks & Notes could not read entries", cause);
         list.replaceChildren();
         empty.hidden = true;
         error.textContent = "Couldn't load saved entries.";
+        if (focusKey) activeInput().focus();
         return;
       }
 
       const view = getView();
-      list.replaceChildren(...entries.map(entry => renderEntry(entry, view)));
+      list.replaceChildren(...entries.map(entry => renderEntry(entry, view, renderedSpaceId)));
       empty.hidden = entries.length > 0;
       empty.textContent = kind === "task" ? "No tasks yet." : "No notes yet.";
       if (focusKey) focusEntryAction(focusKey);
@@ -185,22 +194,24 @@
       (control || activeInput()).focus();
     }
 
-    function renderEntry(entry, view) {
+    function renderEntry(entry, view, renderedSpaceId) {
       const row = element("li", { class: "ztan-entry" });
       const content = element("div", { class: "ztan-entry-content" });
       const entryText = element("span", { class: "ztan-entry-text" }, entry.text);
+      const isCurrentRow = () => isCurrentSpace(renderedSpaceId) && row.isConnected;
 
+      const page = pageLink(entry.page?.url, entry.page?.title);
       if (entry.kind === "task") {
         const label = element("label", { class: "ztan-task" });
         const checkbox = element("input", { type: "checkbox" });
         checkbox.checked = entry.done;
         checkbox.dataset.focusKey = `${entry.id}:done`;
         checkbox.addEventListener("change", () => {
+          if (!isCurrentRow()) return;
           const done = checkbox.checked;
-          if (!writeEntries(entries => {
-            const index = findEntry(entries, entry.id);
+          if (!writeEntries(renderedSpaceId, (entries, index) => {
             entries[index] = { ...entries[index], done };
-          })) {
+          }, entry.id)) {
             checkbox.checked = entry.done;
             return;
           }
@@ -210,12 +221,12 @@
         content.append(label);
       } else {
         content.append(entryText);
-        const page = pageLink(entry.page?.url, entry.page?.title);
         if (page) {
           const link = element("a", { class: "ztan-link", href: page.url, title: page.url }, page.title);
           link.dataset.focusKey = `${entry.id}:link`;
           link.addEventListener("click", event => {
             event.preventDefault();
+            if (!isCurrentRow()) return;
             openUILinkIn(page.url, "tab", {
               triggeringPrincipal: Services.scriptSecurityManager.createNullPrincipal({}),
             });
@@ -227,14 +238,16 @@
 
       const controls = element("div", { class: "ztan-entry-actions" });
       const edit = action("Edit", () => {
-        view.edit = { id: entry.id, text: entry.text, page: entry.page || null };
+        if (!isCurrentRow()) return;
+        view.edit = { id: entry.id, text: entry.text, page };
         renderView();
         activeInput().focus();
       });
       edit.disabled = Boolean(view.edit);
       edit.dataset.focusKey = `${entry.id}:edit`;
       const remove = action("Delete", () => {
-        if (!writeEntries(entries => entries.splice(findEntry(entries, entry.id), 1))) return;
+        if (!isCurrentRow()) return;
+        if (!writeEntries(renderedSpaceId, (entries, index) => entries.splice(index, 1), entry.id)) return;
         if (view.edit?.id === entry.id) {
           view.edit = null;
           renderView();
@@ -249,31 +262,30 @@
       return row;
     }
 
-    function findEntry(entries, id) {
-      const index = entries.findIndex(entry => entry.id === id);
-      if (index === -1) throw new Error("Entry was removed in another window");
-      return index;
-    }
-
-    function writeEntries(update) {
-      if (!spaceId || spaceId !== gZenWorkspaces.activeWorkspace) {
-        refreshSpace();
-        return false;
-      }
+    function writeEntries(expectedSpaceId, update, entryId = null) {
+      if (!isCurrentSpace(expectedSpaceId)) return false;
 
       error.textContent = "";
       writing = true;
       try {
         // Read the latest preference and write synchronously on the browser chrome thread.
         const spaces = readSpaces();
-        const entries = entriesFor(spaces, spaceId);
-        update(entries);
-        spaces[spaceId] = entries;
+        const entries = entriesFor(spaces, expectedSpaceId);
+        const index = entryId === null ? -1 : entries.findIndex(entry => entry.id === entryId);
+        if (entryId !== null && index === -1) {
+          renderEntries();
+          error.textContent = getView().edit?.id === entryId
+            ? "This entry was deleted in another window. Copy your draft before canceling."
+            : "This entry was deleted in another window.";
+          return false;
+        }
+        update(entries, index);
+        spaces[expectedSpaceId] = entries;
         Services.prefs.setStringPref(PREF, JSON.stringify(spaces));
         return true;
       } catch (cause) {
         console.error("Zen Tasks & Notes could not save changes", cause);
-        error.textContent = "Couldn't save changes. Try again or reopen the entry.";
+        error.textContent = "Couldn't save changes. Try again.";
         return false;
       } finally {
         writing = false;
@@ -281,6 +293,7 @@
     }
 
     function toggleAttachment() {
+      if (kind !== "note" || !isCurrentSpace(spaceId)) return;
       const view = getView();
       const draft = view.edit || view.add;
       if (draft.page) {
@@ -295,7 +308,9 @@
     }
 
     function cancelEdit() {
+      if (!isCurrentSpace(spaceId)) return;
       const view = getView();
+      if (!view.edit) return;
       const id = view.edit.id;
       view.edit = null;
       renderView();
@@ -303,7 +318,7 @@
     }
 
     form.addEventListener("input", event => {
-      if (event.target !== activeInput()) return;
+      if (event.target !== activeInput() || !isCurrentSpace(spaceId)) return;
       const view = getView();
       const draft = view.edit || view.add;
       draft.text = event.target.value;
@@ -312,6 +327,8 @@
 
     form.addEventListener("submit", event => {
       event.preventDefault();
+      const expectedSpaceId = spaceId;
+      if (!isCurrentSpace(expectedSpaceId)) return;
       const view = getView();
       const draft = view.edit || view.add;
       const value = draft.text.trim();
@@ -322,16 +339,15 @@
       }
 
       const fields = kind === "task" ? { text: value } : { text: value, page: draft.page };
-      if (!writeEntries(entries => {
+      if (!writeEntries(expectedSpaceId, (entries, index) => {
         if (view.edit) {
-          const index = findEntry(entries, draft.id);
           entries[index] = { ...entries[index], ...fields };
         } else {
           const entry = { id: crypto.randomUUID(), kind, ...fields };
           if (kind === "task") entry.done = false;
           entries.unshift(entry);
         }
-      })) {
+      }, view.edit?.id)) {
         activeInput().focus();
         return;
       }
@@ -344,6 +360,11 @@
 
     function panelIsOpen() {
       return panel.state === "open" || panel.state === "showing";
+    }
+
+    function isCurrentSpace(expectedSpaceId) {
+      if (spaceId !== gZenWorkspaces.activeWorkspace) refreshSpace();
+      return Boolean(expectedSpaceId) && expectedSpaceId === spaceId;
     }
 
     function refreshSpace() {
@@ -390,7 +411,7 @@
     });
 
     const observeEntries = () => {
-      if (!writing && spaceId && panelIsOpen()) renderEntries();
+      if (!writing && panelIsOpen() && isCurrentSpace(spaceId)) renderEntries();
     };
     Services.prefs.addObserver(PREF, observeEntries);
     window.addEventListener("unload", () => Services.prefs.removeObserver(PREF, observeEntries), {
