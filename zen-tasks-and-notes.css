@@ -78,7 +78,7 @@
   line-height: 1.2;
 }
 
-#ztan-panel :is(.ztan-space, .ztan-page-title, .ztan-link) {
+#ztan-panel :is(.ztan-space, .ztan-page-label) {
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
@@ -258,6 +258,20 @@
   flex: 1;
   gap: 2px;
   min-width: 0;
+}
+
+#ztan-panel :is(.ztan-page-title, .ztan-link) {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+#ztan-panel .ztan-favicon {
+  flex: none;
+  object-fit: contain;
+  -moz-context-properties: fill, fill-opacity;
+  fill: var(--ztan-muted);
 }
 
 #ztan-panel .ztan-list-heading {

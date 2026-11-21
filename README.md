@@ -24,6 +24,6 @@ The mod targets Zen 1.23b and can run alongside **Zen Tab Group Colors**. In **S
 
 ## Save a page with a note
 
-Open an HTTP or HTTPS page, open **Notes**, and choose **Attach current page** before saving. The panel shows the page title so you can check which link will be saved. Choose **Remove** to clear the attachment. Clicking a saved page title opens it in a new tab.
+Open an HTTP or HTTPS page, open **Notes**, and choose **Attach current page** before saving. The attachment preview and saved link show the page title and its favicon from Zen’s local cache. Pages without a cached favicon show a generic site icon. Choose **Remove** to clear the attachment. Clicking a saved page title opens it in a new tab.
 
 Use the Tab key to reach the sidebar button and panel controls, and Escape to close the panel. Enter adds a new line. Use **Save note** or Ctrl/⌘ + Enter to save.

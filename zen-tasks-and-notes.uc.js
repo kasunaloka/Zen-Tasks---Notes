@@ -71,6 +71,21 @@
     return { text: "", page: null };
   }
 
+  function showPageTitle(container, page) {
+    if (!page) {
+      container.replaceChildren();
+      return;
+    }
+    const icon = element("img", {
+      class: "ztan-favicon", alt: "", width: "16", height: "16", draggable: "false",
+    });
+    icon.addEventListener("error", () => {
+      icon.src = "chrome://global/skin/icons/defaultFavicon.svg";
+    }, { once: true });
+    icon.src = `page-icon:${page.url}`;
+    container.replaceChildren(icon, element("span", { class: "ztan-page-label" }, page.title));
+  }
+
   function init() {
     const footer = document.getElementById("zen-sidebar-foot-buttons");
     const popupSet = document.getElementById("mainPopupSet");
@@ -185,7 +200,7 @@
     function renderAttachment(page) {
       attach.hidden = Boolean(page);
       pagePreview.hidden = !page;
-      pageTitle.textContent = page?.title || "";
+      showPageTitle(pageTitle, page);
       pageTitle.title = page?.url || "";
     }
 
@@ -312,7 +327,8 @@
 
       const page = pageLink(entry.page?.url, entry.page?.title);
       if (page) {
-        const link = element("a", { class: "ztan-link", href: page.url, title: page.url }, page.title);
+        const link = element("a", { class: "ztan-link", href: page.url, title: page.url });
+        showPageTitle(link, page);
         link.dataset.focusKey = `${entry.id}:link`;
         link.addEventListener("click", event => {
           event.preventDefault();
