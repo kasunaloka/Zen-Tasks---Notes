@@ -110,9 +110,16 @@
   cursor: default;
 }
 
-#ztan-panel :is(textarea, input, button, a):focus-visible {
+#ztan-panel :is(button, a):focus-visible {
   outline: 2px solid var(--ztan-accent);
   outline-offset: 1px;
+}
+
+#ztan-panel :is(.ztan-composer:has(textarea:focus), .ztan-filter:has(input:focus)) {
+  /* Replace the existing border with a single focus line. */
+  border-color: transparent;
+  outline: 1px solid var(--ztan-accent);
+  outline-offset: -1px;
 }
 
 #ztan-panel .ztan-icon {
@@ -177,14 +184,15 @@
   font-family: inherit;
 }
 
-#ztan-panel :where(textarea, .ztan-filter input) {
-  /* Zen's chrome theme also styles HTML text fields inside popups. */
+#ztan-panel :is(.ztan-composer textarea, .ztan-filter input) {
+  /* The surrounding control draws the focus indicator. */
   appearance: none;
   width: 100%;
   min-width: 0;
   margin: 0;
   border: 0 !important;
   border-radius: 0;
+  outline: none !important;
   background: transparent !important;
   box-shadow: none !important;
   color: inherit;
@@ -197,11 +205,6 @@
   padding: 10px 12px !important;
   resize: vertical;
   line-height: 1.5;
-}
-
-#ztan-panel textarea:focus-visible {
-  outline-offset: -3px;
-  outline-width: 1px;
 }
 
 #ztan-panel :is(textarea, input)::placeholder {
@@ -313,13 +316,6 @@
   padding: 0;
   color: var(--arrowpanel-color, FieldText);
 }
-
-#ztan-panel .ztan-filter:has(input:focus-visible) {
-  outline: 2px solid var(--ztan-accent);
-  outline-offset: 1px;
-}
-
-#ztan-panel .ztan-filter input:focus-visible { outline: none; }
 
 #ztan-panel .ztan-list {
   display: grid;
