@@ -25,6 +25,14 @@
     return button;
   }
 
+  function iconAction(label, iconClass, handler) {
+    const button = element("button", {
+      type: "button", class: `ztan-icon ${iconClass}`, title: label, "aria-label": label,
+    });
+    button.addEventListener("click", handler);
+    return button;
+  }
+
   function readSpaces() {
     const spaces = JSON.parse(Services.prefs.getStringPref(PREF, "{}"));
     if (!spaces || typeof spaces !== "object" || Array.isArray(spaces)) {
@@ -106,12 +114,11 @@
     const titles = element("div", { class: "ztan-titles" });
     const heading = element("h1", { class: "ztan-title" }, "Notes");
     const spaceLabel = element("span", { class: "ztan-space" });
-    const close = action("Close notes", () => {
+    const close = iconAction("Close notes", "ztan-close", () => {
       restoreFocus = true;
       panel.hidePopup();
     });
-    close.className = "ztan-icon ztan-close";
-    close.title = "Close notes";
+
     titles.append(heading, spaceLabel);
     header.append(titles, close);
     const form = element("form", { class: "ztan-composer" });
@@ -154,14 +161,13 @@
     const search = element("input", {
       type: "search", placeholder: "Search notes…", "aria-label": "Search notes in this Space",
     });
-    const clear = action("Clear search", () => {
+    const clear = iconAction("Clear search", "ztan-close", () => {
       if (!isCurrentSpace(spaceId)) return;
       search.value = "";
       filterNotes();
       search.focus();
     });
-    clear.className = "ztan-icon ztan-close";
-    clear.title = "Clear search";
+
     filter.append(search, clear);
     const list = element("ul", { class: "ztan-list", "aria-label": "Saved notes" });
     const empty = element("p", { class: "ztan-empty", role: "status" });
@@ -187,8 +193,8 @@
       const view = getView();
       const draft = view.edit || view.add;
       const name = gZenWorkspaces.getWorkspaceFromId?.(spaceId)?.name;
-      spaceLabel.textContent = name ? `Space · ${name}` : "Current Space";
-      spaceLabel.title = spaceLabel.textContent;
+      spaceLabel.textContent = name || "Current Space";
+      spaceLabel.title = name ? `Current Space: ${name}` : "Current Space";
       status.textContent = "";
       search.value = view.query;
       composerLabel.textContent = view.edit ? "Editing note" : "New note";
@@ -347,25 +353,23 @@
         confirmDelete.setAttribute("aria-label", `Confirm deleting note ${description}`);
         controls.append(prompt, cancelDelete, confirmDelete);
       } else {
-        const edit = action("Edit", () => {
+        const edit = iconAction("Edit note", "ztan-edit", () => {
           if (!isCurrentRow()) return;
           view.edit = { id: entry.id, text: entry.text, page };
           renderView();
           noteInput.focus();
         });
         edit.disabled = Boolean(view.edit);
-        edit.className = "ztan-icon ztan-edit";
-        edit.title = "Edit note";
+
         edit.dataset.focusKey = `${entry.id}:edit`;
         edit.setAttribute("aria-label", `Edit note ${description}`);
-        const remove = action("Delete", () => {
+        const remove = iconAction("Delete note", "ztan-remove", () => {
           if (!isCurrentRow()) return;
           view.confirmDeleteId = entry.id;
           renderEntries();
           focusEntryAction(`${entry.id}:cancel-delete`);
         });
-        remove.className = "ztan-icon ztan-remove";
-        remove.title = "Delete note";
+
         remove.dataset.focusKey = `${entry.id}:delete`;
         remove.setAttribute("aria-label", `Delete note ${description}`);
         controls.append(edit, remove);

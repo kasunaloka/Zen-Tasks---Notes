@@ -6,14 +6,14 @@
 
 #ztan-panel {
   --panel-padding: 0;
-  --ztan-line: color-mix(in srgb, currentColor 18%, transparent);
+  --ztan-line: color-mix(in srgb, currentColor 14%, transparent);
   --ztan-soft: color-mix(in srgb, currentColor 5%, transparent);
-  --ztan-hover: color-mix(in srgb, currentColor 10%, transparent);
   --ztan-muted: color-mix(in srgb, currentColor 76%, transparent);
-  --ztan-accent: light-dark(#305e56, #a8d8c8);
-  --ztan-on-accent: light-dark(white, #102e26);
-  --ztan-tint: color-mix(in srgb, var(--ztan-accent) 8%, transparent);
-  --ztan-danger: light-dark(#a12d36, #ffafb3);
+  --ztan-accent: light-dark(#14674e, #89e3bb);
+  --ztan-on-accent: light-dark(white, #102f24);
+  --ztan-tint: color-mix(in srgb, var(--ztan-accent) 14%, transparent);
+  --ztan-blue: light-dark(#235aa4, #a6caff);
+  --ztan-danger: light-dark(#a22d43, #ffacb7);
 }
 
 #ztan-panel [hidden] {
@@ -24,9 +24,9 @@
   display: flex;
   flex-direction: column;
   gap: 10px;
-  width: min(392px, 90vw);
+  width: min(396px, 90vw);
   max-height: min(680px, 85vh);
-  padding: 18px;
+  padding: 16px;
   overflow: auto;
   font: menu;
 }
@@ -51,8 +51,8 @@
 }
 
 #ztan-panel .ztan-header {
-  gap: 12px;
-  margin-bottom: 4px;
+  gap: 10px;
+  margin-bottom: 3px;
 }
 
 #ztan-panel .ztan-header::before {
@@ -73,7 +73,7 @@
 }
 
 #ztan-panel .ztan-title {
-  font-size: 1.48em;
+  font-size: 1.3rem !important;
   letter-spacing: -.035em;
   line-height: 1.2;
 }
@@ -95,14 +95,14 @@
   padding: 4px 8px;
   border: 1px solid transparent;
   border-radius: 7px;
-  background: transparent;
-  color: inherit;
+  background-color: color-mix(in srgb, var(--ztan-action, currentColor) 10%, transparent);
+  color: var(--ztan-action, inherit);
   font: inherit;
   cursor: pointer;
 }
 
 #ztan-panel button:enabled:hover {
-  background-color: var(--ztan-hover);
+  background-color: color-mix(in srgb, var(--ztan-action, currentColor) 21%, transparent);
 }
 
 #ztan-panel button:disabled {
@@ -116,29 +116,49 @@
 }
 
 #ztan-panel .ztan-icon {
+  display: inline-grid;
+  place-items: center;
   flex: none;
   width: 30px;
   height: 30px;
   padding: 0;
-  font-size: 0;
-  color: var(--ztan-muted);
-  -moz-context-properties: fill;
+}
+
+#ztan-panel :is(.ztan-icon, .ztan-attach, .ztan-filter)::before {
+  content: "";
+  display: block;
+  flex: none;
+  width: 15px;
+  height: 15px;
+  background: var(--ztan-icon) center / contain no-repeat;
+  -moz-context-properties: fill, fill-opacity;
   fill: currentColor;
-  background: transparent var(--ztan-icon) center / 15px no-repeat;
+  pointer-events: none;
 }
 
 #ztan-panel .ztan-close { --ztan-icon: url("chrome://global/skin/icons/close.svg"); }
 #ztan-panel .ztan-edit { --ztan-icon: url("chrome://global/skin/icons/edit.svg"); }
 #ztan-panel .ztan-remove { --ztan-icon: url("chrome://global/skin/icons/delete.svg"); }
+#ztan-panel :is(.ztan-edit, .ztan-attach) { --ztan-action: var(--ztan-blue); }
+#ztan-panel :is(.ztan-remove, .ztan-delete) { --ztan-action: var(--ztan-danger); }
 
 #ztan-panel .ztan-composer {
   display: grid;
-  gap: 10px;
+  gap: 0;
   min-width: 0;
-  padding: 12px;
+  padding: 0;
   border: 1px solid var(--ztan-line);
   border-radius: 12px;
-  background: var(--ztan-tint);
+  background: var(--ztan-soft);
+}
+
+#ztan-panel .ztan-composer-heading {
+  padding: 12px 12px 0;
+}
+
+#ztan-panel .ztan-composer-actions {
+  padding: 8px;
+  border-top: 1px solid var(--ztan-line);
 }
 
 #ztan-panel :is(.ztan-composer-heading, .ztan-composer-actions) {
@@ -157,14 +177,16 @@
   font-family: inherit;
 }
 
-#ztan-panel :is(textarea, .ztan-filter input) {
+#ztan-panel :where(textarea, .ztan-filter input) {
+  /* Zen's chrome theme also styles HTML text fields inside popups. */
   appearance: none;
   width: 100%;
   min-width: 0;
   margin: 0;
-  border: 1px solid var(--ztan-line);
-  border-radius: 8px;
-  background-color: var(--arrowpanel-background, Field);
+  border: 0 !important;
+  border-radius: 0;
+  background: transparent !important;
+  box-shadow: none !important;
   color: inherit;
   font: inherit;
 }
@@ -172,9 +194,14 @@
 #ztan-panel textarea {
   min-height: 72px;
   max-height: max(72px, min(180px, 26vh));
-  padding: 9px 10px;
+  padding: 10px 12px !important;
   resize: vertical;
   line-height: 1.5;
+}
+
+#ztan-panel textarea:focus-visible {
+  outline-offset: -3px;
+  outline-width: 1px;
 }
 
 #ztan-panel :is(textarea, input)::placeholder {
@@ -194,19 +221,11 @@
 }
 
 #ztan-panel .ztan-attach {
+  --ztan-icon: url("chrome://global/skin/icons/link.svg");
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding-inline: 4px 7px;
-}
-
-#ztan-panel .ztan-attach::before {
-  content: "";
-  width: 14px;
-  height: 14px;
-  background: url("chrome://global/skin/icons/link.svg") center / contain no-repeat;
-  -moz-context-properties: fill;
-  fill: currentColor;
+  padding-inline: 8px;
 }
 
 #ztan-panel .ztan-primary {
@@ -220,7 +239,14 @@
   background: color-mix(in srgb, var(--ztan-accent) 90%, var(--ztan-on-accent));
 }
 
+#ztan-panel .ztan-primary:disabled {
+  opacity: 1;
+  background: var(--ztan-tint);
+  color: var(--ztan-muted);
+}
+
 #ztan-panel .ztan-page-preview {
+  margin: 0 10px 8px;
   padding: 6px 8px;
   border-inline-start: 2px solid var(--ztan-accent);
   background: var(--ztan-soft);
@@ -255,33 +281,31 @@
 }
 
 #ztan-panel .ztan-filter {
-  position: relative;
+  --ztan-icon: url("chrome://global/skin/icons/search-glass.svg");
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 34px;
+  padding-inline: 10px 2px;
+  border: 1px solid var(--ztan-line);
+  border-radius: 8px;
+  background: var(--ztan-soft);
+  color: var(--ztan-muted);
 }
 
 #ztan-panel .ztan-filter input {
-  height: 34px;
-  padding-inline: 31px 35px;
-  background: var(--ztan-soft);
+  flex: 1;
+  height: 30px;
+  padding: 0;
+  color: var(--arrowpanel-color, FieldText);
 }
 
-#ztan-panel .ztan-filter::before {
-  content: "";
-  position: absolute;
-  inset-inline-start: 10px;
-  top: 10px;
-  width: 14px;
-  height: 14px;
-  pointer-events: none;
-  background: url("chrome://global/skin/icons/search-glass.svg") center / contain no-repeat;
-  -moz-context-properties: fill;
-  fill: var(--ztan-muted);
+#ztan-panel .ztan-filter:has(input:focus-visible) {
+  outline: 2px solid var(--ztan-accent);
+  outline-offset: 1px;
 }
 
-#ztan-panel .ztan-filter .ztan-close {
-  position: absolute;
-  inset-inline-end: 2px;
-  top: 2px;
-}
+#ztan-panel .ztan-filter input:focus-visible { outline: none; }
 
 #ztan-panel .ztan-list {
   display: grid;
@@ -301,10 +325,11 @@
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: start;
   align-self: start;
-  gap: 6px;
-  padding: 9px;
-  border: 1px solid var(--ztan-line);
+  gap: 10px;
+  padding: 10px;
+  border: 1px solid transparent;
   border-radius: 9px;
+  background: var(--ztan-soft);
 }
 
 #ztan-panel .ztan-entry.ztan-editing {
@@ -341,7 +366,7 @@
 
 #ztan-panel .ztan-link {
   max-width: 100%;
-  color: var(--link-color, LinkText);
+  color: var(--ztan-blue) !important;
   font-size: .92em;
   text-underline-offset: 2px;
 }
@@ -381,7 +406,11 @@
   }
 
   #ztan-panel .ztan-icon {
-    forced-color-adjust: none;
     color: ButtonText;
+  }
+
+  #ztan-panel :is(.ztan-icon, .ztan-attach, .ztan-filter)::before {
+    forced-color-adjust: none;
+    fill: ButtonText;
   }
 }
